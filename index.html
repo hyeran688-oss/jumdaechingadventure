@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>점대칭 탐험대 - 실시간 랭킹</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --blue: #2563eb;
+      --green: #16a34a;
+      --red: #dc2626;
+      --yellow: #facc15;
+      --orange: #f97316;
+      --purple: #7c3aed;
+      --text: #111827;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 50%, #fefce8 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--blue);
+      color: white;
+      padding: 12px 16px;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 10px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 16px;
+      border: 2px solid #dbeafe;
+      padding: 14px;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+      margin-bottom: 10px;
+    }
+
+    .login-panel {
+      border-color: #bfdbfe;
+      max-width: 420px;
+      margin: 60px auto;
+      text-align: center;
+    }
+
+    .login-title {
+      font-weight: 900;
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      color: var(--blue);
+    }
+
+    .login-guide {
+      font-size: 0.95rem;
+      margin-bottom: 14px;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .login-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input {
+      padding: 12px;
+      border-radius: 10px;
+      border: 2px solid #d1d5db;
+      font-size: 1rem;
+      width: 100%;
+      max-width: 300px;
+      text-align: center;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    .game-bar {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    @media (min-width: 720px) {
+      .game-bar {
+        grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr;
+      }
+    }
+
+    .stat-card {
+      background: white;
+      border: 2px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 6px 8px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: #4b5563;
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .question-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+      flex-wrap: wrap;
+    }
+
+    .question-title {
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .chip {
+      display: inline-block;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #1e3a8a;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    .stage-chip {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .mission-box {
+      border-radius: 12px;
+      border: 2px dashed #a78bfa;
+      background: #faf5ff;
+      padding: 8px;
+      margin-bottom: 6px;
+    }
+
+    .mission-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #5b21b6;
+      margin-bottom: 4px;
+    }
+
+    .mission-target {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: #111827;
+      background: white;
+      border-radius: 10px;
+      padding: 6px 8px;
+      margin: 4px 0;
+      border: 2px solid #ddd6fe;
+      text-align: center;
+    }
+
+    .small-text {
+      font-size: 0.85rem;
+      color: #4b5563;
+      line-height: 1.4;
+    }
+
+    .progress-wrap {
+      margin-top: 4px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      height: 12px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22c55e, #84cc16);
+      transition: width 0.25s;
+    }
+
+    .star-row {
+      font-size: 1.2rem;
+      letter-spacing: 2px;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .canvas-box {
+      border: 2px solid #cbd5e1;
+      border-radius: 14px;
+      background: #f8fafc;
+      padding: 6px;
+      text-align: center;
+      position: relative;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+      background: white;
+      border-radius: 10px;
+      touch-action: manipulation;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      background: #e5e7eb;
+      color: #111827;
+      transition: transform 0.08s, filter 0.08s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-blue {
+      background: var(--blue);
+      color: white;
+    }
+
+    .btn-green {
+      background: var(--green);
+      color: white;
+    }
+
+    .btn-red {
+      background: var(--red);
+      color: white;
+    }
+
+    .btn-purple {
+      background: var(--purple);
+      color: white;
+    }
+
+    .selected {
+      outline: 3px solid var(--yellow);
+      filter: brightness(1.05);
+    }
+
+    .feedback {
+      margin-top: 6px;
+      border-radius: 12px;
+      padding: 8px;
+      min-height: 46px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .feedback.good {
+      background: #ecfdf5;
+      border-color: #bbf7d0;
+    }
+
+    .feedback.bad {
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    .ranking-panel {
+      border-color: #bbf7d0;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .ranking-title {
+      font-weight: 900;
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      text-align: center;
+      color: var(--green);
+    }
+
+    .ranking-list {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+      line-height: 1.8;
+      font-size: 0.92rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .ranking-list li {
+      padding: 6px 10px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .ranking-list li:nth-child(1) {
+      background: #fef3c7;
+      font-weight: 800;
+    }
+
+    .ranking-list li:nth-child(2) {
+      background: #f3f4f6;
+      font-weight: 700;
+    }
+
+    .ranking-list li:nth-child(3) {
+      background: #fff7ed;
+      font-weight: 700;
+    }
+
+    .ranking-btn-row {
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .pulse {
+      animation: pulse 0.45s ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+
+    .confetti-text {
+      font-weight: 900;
+      color: #15803d;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .overlay-content {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  점대칭 탐험대: 중심과 대응점 미션
+</header>
+
+<main>
+  <!-- 1. 로그인 화면 (처음에만 보임) -->
+  <section id="loginBox" class="panel login-panel">
+    <div class="login-title">점대칭 탐험대</div>
+    <div class="login-guide">
+      아래에 자신을 식별할 수 있는 닉네임을 입력하세요.<br>
+      입력한 닉네임은 랭킹에 표시됩니다.
+    </div>
+    <div class="login-row">
+      <input
+        id="nicknameInput"
+        maxlength="20"
+        placeholder="예: 지우, 민준, 5-2 12번"
+      />
+      <button id="btnStartLogin" class="btn-blue">시작하기</button>
+    </div>
+  </section>
+
+  <!-- 2. 게임 영역 (시작 후에만 보임) -->
+  <div id="gameArea" class="hidden">
+    <section class="game-bar">
+      <div class="stat-card">
+        <div class="stat-label">현재 문제</div>
+        <div class="stat-value" id="statQuestion">1 / 50</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">점수</div>
+        <div class="stat-value" id="statScore">0점</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">콤보</div>
+        <div class="stat-value" id="statCombo">0 COMBO</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">하트</div>
+        <div class="stat-value" id="statHearts">♥ ♥ ♥</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">소요 시간</div>
+        <div class="stat-value" id="statTime">0초</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="question-head">
+        <div class="question-title">
+          이 도형은 점대칭도형일까요?
+        </div>
+        <div>
+          <span class="chip" id="shapeName">도형 이름</span>
+          <span class="chip stage-chip" id="stageLabel">판별 미션</span>
+        </div>
+      </div>
+
+      <div class="mission-box">
+        <div class="mission-title">대응점 미션</div>
+        <div class="small-text" id="missionGuide">
+          점대칭도형이라고 확인되면, 여기에서 대응점을 차례대로 찾는 미션이 열립니다.
+        </div>
+        <div class="mission-target" id="missionTarget">
+          아직 미션 없음
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar" id="missionProgress"></div>
+        </div>
+        <div class="star-row" id="starRow">☆ ☆ ☆</div>
+      </div>
+
+      <div class="canvas-box">
+        <canvas id="canvas" width="460" height="460"></canvas>
+      </div>
+
+      <div class="button-row">
+        <button id="btnSym" class="btn-blue">점대칭도형이다</button>
+        <button id="btnNotSym" class="btn-red">점대칭도형이 아니다</button>
+        <button id="btnCheck" class="btn-purple">정답 확인</button>
+        <button id="btnNext" class="btn-green" disabled>다음 문제</button>
+      </div>
+
+      <div class="feedback" id="feedback">
+        이 도형이 점대칭도형인지 아닌지 먼저 선택하고, [정답 확인]을 눌러 보세요.
+      </div>
+    </section>
+  </div>
+
+  <!-- 3. 랭킹 오버레이 (10문제마다 / 최종에 표시) -->
+  <div id="rankingOverlay" class="overlay hidden">
+    <div class="overlay-content">
+      <div class="ranking-title" id="rankingTitle">중간 랭킹</div>
+      <ol id="rankingList" class="ranking-list">
+        <li>아직 랭킹이 없습니다.</li>
+      </ol>
+      <div class="ranking-btn-row">
+        <button id="btnCloseRanking" class="btn-green">계속하기</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+  import {
+    getAuth,
+    signInAnonymously,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    serverTimestamp,
+    collection,
+    query,
+    orderBy,
+    onSnapshot
+  } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDa7P7_Go3h4vl9ffdJ_QF91NHioKZ3El4",
+    authDomain: "class57-4f8f1.firebaseapp.com",
+    databaseURL: "https://class57-4f8f1-default-rtdb.firebaseio.com",
+    projectId: "class57-4f8f1",
+    storageBucket: "class57-4f8f1.firebasestorage.app",
+    messagingSenderId: "606009192919",
+    appId: "1:606009192919:web:39a06b4b6229c70da89b92",
+    measurementId: "G-2HL14C0BLY"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const ROOM_ID = "central_symmetry_today";
+
+  let currentUser = null;
+  let currentNickname = "익명학생";
+  let rankingData = [];
+
+  async function startFirebaseLogin(nickname) {
+    currentNickname = nickname || "익명학생";
+
+    try {
+      await signInAnonymously(auth);
+      return true;
+    } catch (error) {
+      console.error("익명 로그인 실패:", error);
+      alert("Firebase 익명 로그인에 실패했습니다. Firebase 콘솔에서 Anonymous 로그인이 켜져 있는지 확인해 주세요.");
+      return false;
+    }
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentUser = user;
+      watchRanking();
+    }
+  });
+
+  async function saveScoreToFirebase(finalScore, totalQuestions, correctCount, wrongCount, maxCombo, elapsedSeconds, completed, solvedCount) {
+    if (!currentUser) {
+      console.warn("아직 로그인되지 않아 점수를 저장하지 못했습니다.");
+      return;
+    }
+
+    const scoreRef = doc(db, "rankings", ROOM_ID, "scores", currentUser.uid);
+
+    await setDoc(scoreRef, {
+      nickname: currentNickname,
+      score: finalScore,
+      totalQuestions: totalQuestions,
+      solvedCount: solvedCount,
+      correctCount: correctCount,
+      wrongCount: wrongCount,
+      maxCombo: maxCombo,
+      elapsedSeconds: elapsedSeconds,
+      completed: completed,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  }
+
+  function watchRanking() {
+    const q = query(
+      collection(db, "rankings", ROOM_ID, "scores"),
+      orderBy("score", "desc")
+    );
+
+    onSnapshot(q, (snapshot) => {
+      rankingData = [];
+      snapshot.forEach((docSnap) => {
+        rankingData.push(docSnap.data());
+      });
+    });
+  }
+
+  function getRankingData() {
+    return rankingData;
+  }
+
+  window.startFirebaseLogin = startFirebaseLogin;
+  window.saveScoreToFirebase = saveScoreToFirebase;
+  window.getRankingData = getRankingData;
+</script>
+
+<script>
+  // ---------- 도형 데이터 ----------
+  const symShapes = [
+    {
+      name: "정사각형 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-2,2], B:[2,2], C:[2,-2], D:[-2,-2] },
+      order: ["A","B","C","D"],
+      pairs: [["A","C"],["B","D"]]
+    },
+    {
+      name: "정사각형 2",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-1.5,1.5], B:[1.5,1.5], C:[1.5,-1.5], D:[-1.5,-1.5] },
+      order: ["A","B","C","D"],
+      pairs: [["A","C"],["B","D"]]
+    },
+    {
+      name: "직사각형 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-3,1.5], B:[3,1.5], C:[3,-1.5], D:[-3,-1.5] },
+      order: ["A","B","C","D"],
+      pairs: [["A","C"],["B","D"]]
+    },
+    {
+      name: "직사각형 2",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-2.5,1], B:[2.5,1], C:[2.5,-1], D:[-2.5,-1] },
+      order: ["A","B","C","D"],
+      pairs: [["A","C"],["B","D"]]
+    },
+    {
+      name: "평행사변형 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-3,-1], B:[-1,2], C:[3,1], D:[1,-2] },
+      order: ["A","B","C","D"],
+      pairs: [["A","C"],["B","D"]]
+    },
+    {
+      name: "평행사변형 2",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-2.5,-0.5], B:[-0.5,2], C:[2.5,0.5], D:[0.5,-2] },
+      order: ["A","B","C","D"],
+      pairs: [["A","C"],["B","D"]]
+    },
+    {
+      name: "마름모 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[0,3], B:[2,0], C:[0,-3], D:[-2,0] },
+      order: ["A","B","C","D"],
+      pairs: [["A","C"],["B","D"]]
+    },
+    {
+      name: "마름모 2",
+      isSym: true,
+      center: [0,0],
+      points: { A:[0,2.5], B:[1.5,0], C:[0,-2.5], D:[-1.5,0] },
+      order: ["A","B","C","D"],
+      pairs: [["A","C"],["B","D"]]
+    },
+    {
+      name: "정육각형 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-2,2], B:[2,2], C:[3,0], D:[2,-2], E:[-2,-2], F:[-3,0] },
+      order: ["A","B","C","D","E","F"],
+      pairs: [["A","D"],["B","E"],["C","F"]]
+    },
+    {
+      name: "정육각형 2",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-1.5,1.5], B:[1.5,1.5], C:[2.5,0], D:[1.5,-1.5], E:[-1.5,-1.5], F:[-2.5,0] },
+      order: ["A","B","C","D","E","F"],
+      pairs: [["A","D"],["B","E"],["C","F"]]
+    },
+    {
+      name: "팔각형 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-1,3], B:[1,3], C:[3,1], D:[3,-1], E:[1,-3], F:[-1,-3], G:[-3,-1], H:[-3,1] },
+      order: ["A","B","C","D","E","F","G","H"],
+      pairs: [["A","E"],["B","F"],["C","G"],["D","H"]]
+    },
+    {
+      name: "팔각형 2",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-2,3], B:[1,3], C:[3,1], D:[3,-2], E:[1,-3], F:[-2,-3], G:[-3,-1], H:[-3,2] },
+      order: ["A","B","C","D","E","F","G","H"],
+      pairs: [["A","E"],["B","F"],["C","G"],["D","H"]]
+    },
+    {
+      name: "사각+마름모 혼합 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-3,1], B:[3,1], C:[1,3], D:[-1,3], E:[3,-1], F:[-3,-1], G:[-1,-3], H:[1,-3] },
+      order: ["A","B","C","D","E","F","G","H"],
+      pairs: [["A","E"],["B","F"],["C","G"],["D","H"]]
+    },
+    {
+      name: "사각+마름모 혼합 2",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-2.5,1], B:[2.5,1], C:[1,2.5], D:[-1,2.5], E:[2.5,-1], F:[-2.5,-1], G:[-1,-2.5], H:[1,-2.5] },
+      order: ["A","B","C","D","E","F","G","H"],
+      pairs: [["A","E"],["B","F"],["C","G"],["D","H"]]
+    },
+    {
+      name: "기울어진 평행사변형 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-2.5,0.5], B:[0.5,2.5], C:[2.5,-0.5], D:[-0.5,-2.5] },
+      order: ["A","B","C","D"],
+      pairs: [["A","C"],["B","D"]]
+    },
+    {
+      name: "기울어진 평행사변형 2",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-2,0.5], B:[0.5,2], C:[2,-0.5], D:[-0.5,-2] },
+      order: ["A","B","C","D"],
+      pairs: [["A","C"],["B","D"]]
+    },
+    {
+      name: "육각형 변형 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-3,1], B:[-1,2.5], C:[3,1], D:[3,-1], E:[1,-2.5], F:[-3,-1] },
+      order: ["A","B","C","D","E","F"],
+      pairs: [["A","D"],["B","E"],["C","F"]]
+    },
+    {
+      name: "육각형 변형 2",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-2.5,1], B:[-0.5,2.5], C:[2.5,1], D:[2.5,-1], E:[0.5,-2.5], F:[-2.5,-1] },
+      order: ["A","B","C","D","E","F"],
+      pairs: [["A","D"],["B","E"],["C","F"]]
+    },
+    {
+      name: "오목 팔각형 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-3,2], B:[0.5,1], C:[3,2], D:[1,-0.5], E:[3,-2], F:[-0.5,-1], G:[-3,-2], H:[-1,0.5] },
+      order: ["A","B","C","D","E","F","G","H"],
+      pairs: [["A","E"],["B","F"],["C","G"],["D","H"]]
+    },
+    {
+      name: "오목 팔각형 2",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-2.5,2], B:[0.5,1.2], C:[2.5,2], D:[1,0], E:[2.5,-2], F:[-0.5,-1.2], G:[-2.5,-2], H:[-1,0] },
+      order: ["A","B","C","D","E","F","G","H"],
+      pairs: [["A","E"],["B","F"],["C","G"],["D","H"]]
+    },
+    {
+      name: "십자 변형 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-1,3], B:[1,3], C:[1,1], D:[3,1], E:[3,-1], F:[1,-1], G:[1,-3], H:[-1,-3], I:[-1,-1], J:[-3,-1], K:[-3,1], L:[-1,1] },
+      order: ["A","B","C","D","E","F","G","H","I","J","K","L"],
+      pairs: [["A","G"],["B","H"],["C","I"],["D","J"],["E","K"],["F","L"]]
+    },
+    {
+      name: "십자 변형 2",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-0.8,2.5], B:[0.8,2.5], C:[0.8,0.8], D:[2.5,0.8], E:[2.5,-0.8], F:[0.8,-0.8], G:[0.8,-2.5], H:[-0.8,-2.5], I:[-0.8,-0.8], J:[-2.5,-0.8], K:[-2.5,0.8], L:[-0.8,0.8] },
+      order: ["A","B","C","D","E","F","G","H","I","J","K","L"],
+      pairs: [["A","G"],["B","H"],["C","I"],["D","J"],["E","K"],["F","L"]]
+    },
+    {
+      name: "블록체 H 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-3,3], B:[-1,3], C:[-1,1], D:[1,1], E:[1,3], F:[3,3], G:[3,-3], H:[1,-3], I:[1,-1], J:[-1,-1], K:[-1,-3], L:[-3,-3] },
+      order: ["A","B","C","D","E","F","G","H","I","J","K","L"],
+      pairs: [["A","G"],["B","H"],["C","I"],["D","J"],["E","K"],["F","L"]]
+    },
+    {
+      name: "블록체 H 2",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-2.5,2.5], B:[-1,2.5], C:[-1,1], D:[1,1], E:[1,2.5], F:[2.5,2.5], G:[2.5,-2.5], H:[1,-2.5], I:[1,-1], J:[-1,-1], K:[-1,-2.5], L:[-2.5,-2.5] },
+      order: ["A","B","C","D","E","F","G","H","I","J","K","L"],
+      pairs: [["A","G"],["B","H"],["C","I"],["D","J"],["E","K"],["F","L"]]
+    },
+    {
+      name: "비틀린 팔각형 1",
+      isSym: true,
+      center: [0,0],
+      points: { A:[-3,2], B:[-1,3], C:[2,2], D:[3,0], E:[2,-2], F:[0,-3], G:[-3,-1], H:[-2,0.5] },
+      order: ["A","B","C","D","E","F","G","H"],
+      pairs: [["A","E"],["B","F"],["C","G"],["D","H"]]
+    }
+  ];
+
+  const nonSymShapes = [
+    { name: "이등변삼각형 1", isSym: false, center: [0,0], points: { A:[0,3], B:[-2,-1], C:[2,-1] }, order: ["A","B","C"], pairs: [] },
+    { name: "이등변삼각형 2", isSym: false, center: [0,0], points: { A:[0,2.5], B:[-1.5,-1], C:[1.5,-1.2] }, order: ["A","B","C"], pairs: [] },
+    { name: "직각삼각형 1", isSym: false, center: [0,0], points: { A:[-2,-1], B:[2,-1], C:[-2,2] }, order: ["A","B","C"], pairs: [] },
+    { name: "직각삼각형 2", isSym: false, center: [0,0], points: { A:[-2,1], B:[2,-1], C:[-2,-1.5] }, order: ["A","B","C"], pairs: [] },
+    { name: "사다리꼴 1", isSym: false, center: [0,0], points: { A:[-3,1.5], B:[3,1.5], C:[1.5,-1.5], D:[-1.5,-1.5] }, order: ["A","B","C","D"], pairs: [] },
+    { name: "사다리꼴 2", isSym: false, center: [0,0], points: { A:[-2.5,1.2], B:[2.5,1.5], C:[1.2,-1.5], D:[-1.8,-1.2] }, order: ["A","B","C","D"], pairs: [] },
+    { name: "연 모양 1", isSym: false, center: [0,0], points: { A:[0,3], B:[2,0], C:[0,-2], D:[-1,0] }, order: ["A","B","C","D"], pairs: [] },
+    { name: "연 모양 2", isSym: false, center: [0,0], points: { A:[0,2.5], B:[2,0], C:[0,-2], D:[-1.3,-0.3] }, order: ["A","B","C","D"], pairs: [] },
+    { name: "비뚤어진 오각형 1", isSym: false, center: [0,0], points: { A:[-2,2], B:[1,2.5], C:[3,0], D:[0,-2.5], E:[-3,-1] }, order: ["A","B","C","D","E"], pairs: [] },
+    { name: "비뚤어진 오각형 2", isSym: false, center: [0,0], points: { A:[-1.5,2.5], B:[2,2], C:[3,-0.5], D:[0,-2.5], E:[-3,-0.8] }, order: ["A","B","C","D","E"], pairs: [] },
+    { name: "계단 모양 1", isSym: false, center: [0,0], points: { A:[-3,2], B:[-1,2], C:[-1,1], D:[1,1], E:[1,0], F:[3,0], G:[3,-2], H:[-3,-2] }, order: ["A","B","C","D","E","F","G","H"], pairs: [] },
+    { name: "계단 모양 2", isSym: false, center: [0,0], points: { A:[-2.5,2], B:[-0.5,2], C:[-0.5,0.8], D:[1.5,0.8], E:[1.5,-0.3], F:[3,-0.3], G:[3,-2], H:[-2.5,-2] }, order: ["A","B","C","D","E","F","G","H"], pairs: [] },
+    { name: "한쪽이 긴 육각형 1", isSym: false, center: [0,0], points: { A:[-3,1], B:[-1,2.5], C:[3,1], D:[2,-1], E:[0,-2], F:[-3,-1] }, order: ["A","B","C","D","E","F"], pairs: [] },
+    { name: "한쪽이 긴 육각형 2", isSym: false, center: [0,0], points: { A:[-2.5,1.5], B:[-0.5,2.5], C:[2.8,1], D:[2,-1], E:[0,-2], F:[-3,-1.2] }, order: ["A","B","C","D","E","F"], pairs: [] },
+    { name: "오목 비대칭 1", isSym: false, center: [0,0], points: { A:[-3,2], B:[1,2], C:[0.5,0.5], D:[3,-1], E:[0,-2.5], F:[-2,-1] }, order: ["A","B","C","D","E","F"], pairs: [] },
+    { name: "오목 비대칭 2", isSym: false, center: [0,0], points: { A:[-2.5,2], B:[1,1.8], C:[0.2,0.4], D:[3,-1.2], E:[0.3,-2.2], F:[-2,-0.5] }, order: ["A","B","C","D","E","F"], pairs: [] },
+    { name: "방패 모양 1", isSym: false, center: [0,0], points: { A:[-2,2], B:[2,2], C:[2,0], D:[0,-3], E:[-2,0] }, order: ["A","B","C","D","E"], pairs: [] },
+    { name: "방패 모양 2", isSym: false, center: [0,0], points: { A:[-2.2,2.3], B:[2.2,2], C:[2.2,0], D:[0.2,-2.8], E:[-2.3,0.2] }, order: ["A","B","C","D","E"], pairs: [] },
+    { name: "팔 하나 없는 십자 1", isSym: false, center: [0,0], points: { A:[-1,3], B:[1,3], C:[1,1], D:[3,1], E:[3,-1], F:[1,-1], G:[1,-3], H:[-1,-3], I:[-1,-1], J:[-3,-1] }, order: ["A","B","C","D","E","F","G","H","I","J"], pairs: [] },
+    { name: "팔 하나 없는 십자 2", isSym: false, center: [0,0], points: { A:[-0.8,2.5], B:[0.8,2.5], C:[0.8,1], D:[2.5,1], E:[2.5,-0.8], F:[0.8,-0.8], G:[0.8,-2.5], H:[-0.8,-2.5], I:[-0.8,-1.2], J:[-2.5,-1.2] }, order: ["A","B","C","D","E","F","G","H","I","J"], pairs: [] },
+    { name: "원+삼각형 1", isSym: false, center: [0,0], points: { A:[-2.5,0], B:[-1.5,0], C:[1,2], D:[3,-1], E:[1,-1] }, order: ["A","B","C","D","E"], pairs: [] },
+    { name: "원+삼각형 2", isSym: false, center: [0,0], points: { A:[-2.5,0.2], B:[-1.5,-0.2], C:[1,2], D:[2.8,-1.2], E:[0.8,-1] }, order: ["A","B","C","D","E"], pairs: [] },
+    { name: "크기 다른 사각형 1", isSym: false, center: [0,0], points: { A:[-3,2], B:[-1,2], C:[-1,0], D:[-3,0], E:[1,3], F:[3,3], G:[3,1], H:[1,1] }, order: ["A","B","C","D","E","F","G","H"], pairs: [] },
+    { name: "크기 다른 사각형 2", isSym: false, center: [0,0], points: { A:[-2.5,1.5], B:[-0.8,1.5], C:[-0.8,-0.2], D:[-2.5,-0.2], E:[1.2,2.8], F:[3,2.8], G:[3,1.2], H:[1.2,1.2] }, order: ["A","B","C","D","E","F","G","H"], pairs: [] },
+    { name: "기울어진 사다리꼴 1", isSym: false, center: [0,0], points: { A:[-3,1], B:[2,2], C:[3,-1], D:[-1.5,-2] }, order: ["A","B","C","D"], pairs: [] }
+  ];
+
+  const allShapes = [...symShapes, ...nonSymShapes];
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  let order = shuffle([...Array(allShapes.length).keys()]);
+  let index = 0;
+  let current = allShapes[order[index]];
+  let selectedAnswer = null;
+  let hasChecked = false;
+  let stage = "locked";
+
+  let score = 0;
+  let combo = 0;
+  let hearts = 3;
+  let correctCount = 0;
+  let wrongCount = 0;
+  let maxCombo = 0;
+
+  let totalStartTime = null;
+  let questionStartTime = null;
+  let timerInterval = null;
+
+  let missionList = [];
+  let missionIndex = 0;
+  let currentTarget = null;
+  let currentAnswer = null;
+  let foundPairs = [];
+
+  let isFinalRanking = false;
+
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const loginBox = document.getElementById("loginBox");
+  const gameArea = document.getElementById("gameArea");
+  const nicknameInput = document.getElementById("nicknameInput");
+  const btnStartLogin = document.getElementById("btnStartLogin");
+
+  const statQuestion = document.getElementById("statQuestion");
+  const statScore = document.getElementById("statScore");
+  const statCombo = document.getElementById("statCombo");
+  const statHearts = document.getElementById("statHearts");
+  const statTime = document.getElementById("statTime");
+
+  const shapeName = document.getElementById("shapeName");
+  const stageLabel = document.getElementById("stageLabel");
+
+  const btnSym = document.getElementById("btnSym");
+  const btnNotSym = document.getElementById("btnNotSym");
+  const btnCheck = document.getElementById("btnCheck");
+  const btnNext = document.getElementById("btnNext");
+
+  const feedback = document.getElementById("feedback");
+  const missionGuide = document.getElementById("missionGuide");
+  const missionTarget = document.getElementById("missionTarget");
+  const missionProgress = document.getElementById("missionProgress");
+  const starRow = document.getElementById("starRow");
+
+  const rankingOverlay = document.getElementById("rankingOverlay");
+  const rankingTitle = document.getElementById("rankingTitle");
+  const rankingList = document.getElementById("rankingList");
+  const btnCloseRanking = document.getElementById("btnCloseRanking");
+
+  function pointToCanvas(x, y) {
+    const pad = 40;
+    const scale = (canvas.width - pad * 2) / 8;
+    return {
+      x: canvas.width / 2 + x * scale,
+      y: canvas.height / 2 - y * scale
+    };
+  }
+
+  function rotatePoint([x, y], center, angle) {
+    const [cx, cy] = center;
+    const dx = x - cx;
+    const dy = y - cy;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return [
+      cx + dx * cos - dy * sin,
+      cy + dx * sin + dy * cos
+    ];
+  }
+
+  function getPoints(shape, angle = 0) {
+    const result = {};
+    for (const label of shape.order) {
+      result[label] = rotatePoint(shape.points[label], shape.center, angle);
+    }
+    return result;
+  }
+
+  function drawPolygon(shape, angle, fill, stroke, lineWidth) {
+    const pts = getPoints(shape, angle);
+    ctx.save();
+    ctx.beginPath();
+    shape.order.forEach((label, i) => {
+      const [x, y] = pts[label];
+      const p = pointToCanvas(x, y);
+      if (i === 0) {
+        ctx.moveTo(p.x, p.y);
+      } else {
+        ctx.lineTo(p.x, p.y);
+      }
+    });
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawFoundPairs(shape) {
+    ctx.save();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#16a34a";
+    foundPairs.forEach(pair => {
+      const [a, b] = pair;
+      const p1 = pointToCanvas(...shape.points[a]);
+      const p2 = pointToCanvas(...shape.points[b]);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+
+      const c = pointToCanvas(...shape.center);
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "#16a34a";
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function drawLabels(shape, selectedPoint, wrongPoint) {
+    ctx.save();
+    ctx.font = "bold 14px system-ui";
+    for (const label of shape.order) {
+      const [x, y] = shape.points[label];
+      const p = pointToCanvas(x, y);
+
+      let color = "#111827";
+      let fill = "#ffffff";
+
+      if (label === selectedPoint) {
+        fill = "#fde68a";
+        color = "#111827";
+      }
+      if (label === wrongPoint) {
+        fill = "#fecaca";
+        color = "#991b1b";
+      }
+
+      const isFound = foundPairs.some(pair => pair.includes(label));
+      if (isFound) {
+        fill = "#bbf7d0";
+        color = "#14532d";
+      }
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const textW = ctx.measureText(label).width;
+      ctx.fillStyle = color;
+      ctx.fillText(label, p.x - textW / 2, p.y - 10);
+    }
+    ctx.restore();
+  }
+
+  function draw(shape, angle = 0, options = {}) {
+    const { showRotatedOverlay = false, selectedPoint = null, wrongPoint = null } = options;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.lineWidth = 1;
+    for (let v = -4; v <= 4; v++) {
+      const p1 = pointToCanvas(v, -4);
+      const p2 = pointToCanvas(v, 4);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+
+      const q1 = pointToCanvas(-4, v);
+      const q2 = pointToCanvas(4, v);
+      ctx.beginPath();
+      ctx.moveTo(q1.x, q1.y);
+      ctx.lineTo(q2.x, q2.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    const c = pointToCanvas(current.center[0], current.center[1]);
+    ctx.save();
+    ctx.fillStyle = "#2563eb";
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#1e3a8a";
+    ctx.font = "bold 14px system-ui";
+    ctx.fillText("O", c.x + 8, c.y - 6);
+    ctx.restore();
+
+    drawPolygon(shape, 0, "#dbeafe", "#1d4ed8", 3);
+    drawFoundPairs(shape);
+
+    if (angle !== 0) {
+      drawPolygon(shape, angle, "rgba(250, 204, 21, 0.35)", "#f97316", 3);
+    }
+
+    if (showRotatedOverlay) {
+      drawPolygon(shape, Math.PI, "rgba(250, 204, 21, 0.28)", "#f97316", 3);
+    }
+
+    drawLabels(shape, selectedPoint, wrongPoint);
+  }
+
+  function updateStats() {
+    statQuestion.textContent = `${index + 1} / ${allShapes.length}`;
+    statScore.textContent = `${score}점`;
+    statCombo.textContent = `${combo} COMBO`;
+    statHearts.textContent = "♥ ".repeat(hearts) + "♡ ".repeat(Math.max(0, 3 - hearts));
+  }
+
+  function updateMaxCombo() {
+    if (combo > maxCombo) {
+      maxCombo = combo;
+    }
+  }
+
+  function getElapsedSeconds() {
+    if (!totalStartTime) return 0;
+    return Math.round((Date.now() - totalStartTime) / 1000);
+  }
+
+  function startTimer() {
+    totalStartTime = Date.now();
+    questionStartTime = Date.now();
+    timerInterval = setInterval(() => {
+      statTime.textContent = `${getElapsedSeconds()}초`;
+    }, 1000);
+  }
+
+  function getTimeBonus() {
+    if (!questionStartTime) return 10;
+    const elapsed = (Date.now() - questionStartTime) / 1000;
+    if (elapsed <= 5) return 100;
+    if (elapsed <= 10) return 70;
+    if (elapsed <= 20) return 40;
+    return 10;
+  }
+
+  function addScore(amount) {
+    score = Math.max(0, score + amount);
+    updateStats();
+  }
+
+  function penalty(amount) {
+    score = Math.max(0, score - amount);
+    updateStats();
+  }
+
+  function loadQuestion() {
+    current = allShapes[order[index]];
+    selectedAnswer = null;
+    hasChecked = false;
+    stage = "judge";
+    questionStartTime = Date.now();
+
+    missionList = [];
+    missionIndex = 0;
+    currentTarget = null;
+    currentAnswer = null;
+    foundPairs = [];
+
+    btnSym.classList.remove("selected");
+    btnNotSym.classList.remove("selected");
+    btnSym.disabled = false;
+    btnNotSym.disabled = false;
+    btnCheck.disabled = false;
+    btnNext.disabled = true;
+
+    shapeName.textContent = current.name;
+    stageLabel.textContent = "판별 미션";
+
+    feedback.className = "feedback";
+    feedback.textContent = "이 도형이 점대칭도형인지 아닌지 먼저 선택하고, [정답 확인]을 눌러 보세요.";
+
+    missionTarget.textContent = "아직 미션 없음";
+    missionGuide.textContent = "점대칭도형이라고 확인되면, 여기에서 대응점을 차례대로 찾는 미션이 열립니다.";
+    missionProgress.style.width = "0%";
+    starRow.textContent = "☆ ☆ ☆";
+
+    updateStats();
+    draw(current);
+  }
+
+  function renderRanking() {
+    const ranking = window.getRankingData ? window.getRankingData() : [];
+
+    rankingList.innerHTML = "";
+
+    if (ranking.length === 0) {
+      rankingList.innerHTML = "<li>아직 랭킹이 없습니다.</li>";
+      return;
+    }
+
+    ranking.forEach((item, idx) => {
+      const li = document.createElement("li");
+      const name = item.nickname || "익명학생";
+      const sc = item.score || 0;
+      const solved = item.solvedCount || 0;
+      const time = item.elapsedSeconds || 0;
+      const done = item.completed ? "완료" : "진행 중";
+
+      li.textContent = `${idx + 1}위  ${name}  -  ${sc}점  /  ${solved}문제  /  ${time}초  /  ${done}`;
+      rankingList.appendChild(li);
+    });
+  }
+
+  async function showMidRanking(solvedCount) {
+    const elapsedSeconds = getElapsedSeconds();
+
+    if (window.saveScoreToFirebase) {
+      await window.saveScoreToFirebase(
+        score,
+        allShapes.length,
+        correctCount,
+        wrongCount,
+        maxCombo,
+        elapsedSeconds,
+        false,
+        solvedCount
+      );
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    rankingTitle.textContent = `${solvedCount}문제 완료! 중간 랭킹`;
+    btnCloseRanking.classList.remove("hidden");
+    isFinalRanking = false;
+
+    renderRanking();
+    rankingOverlay.classList.remove("hidden");
+  }
+
+  async function showFinalResult() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+    }
+
+    btnNext.disabled = true;
+    btnCheck.disabled = true;
+    btnSym.disabled = true;
+    btnNotSym.disabled = true;
+
+    const elapsedSeconds = getElapsedSeconds();
+
+    if (window.saveScoreToFirebase) {
+      await window.saveScoreToFirebase(
+        score,
+        allShapes.length,
+        correctCount,
+        wrongCount,
+        maxCombo,
+        elapsedSeconds,
+        true,
+        allShapes.length
+      );
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    let rank = "연습 탐험가";
+    let stars = "★ ☆ ☆";
+
+    if (score >= 10000) {
+      rank = "점대칭 마스터";
+      stars = "★ ★ ★";
+    } else if (score >= 6500) {
+      rank = "대응점 해결사";
+      stars = "★ ★ ☆";
+    }
+
+    stageLabel.textContent = "탐험 완료";
+    shapeName.textContent = "최종 결과";
+    missionTarget.textContent = "모든 미션 완료!";
+    missionProgress.style.width = "100%";
+    starRow.textContent = stars;
+
+    feedback.className = "feedback good";
+    feedback.innerHTML =
+      `<span class="confetti-text">50문항을 모두 완료했습니다!</span><br>
+      최종 점수는 <b>${score}점</b>, 등급은 <b>${rank}</b>입니다.<br>
+      걸린 시간은 <b>${elapsedSeconds}초</b>입니다.<br><br>
+      오늘 정리: 점대칭도형은 중심 O를 기준으로 180° 돌렸을 때 자기 자신과 겹치며,
+      대응점끼리 이은 선은 항상 중심 O를 지나고, 중심에서의 거리가 양쪽에서 같습니다.`;
+
+    rankingTitle.textContent = "최종 랭킹";
+    btnCloseRanking.classList.add("hidden");
+    isFinalRanking = true;
+
+    renderRanking();
+    rankingOverlay.classList.remove("hidden");
+
+    draw(current);
+  }
+
+  btnStartLogin.addEventListener("click", async () => {
+    const nickname = nicknameInput.value.trim();
+
+    if (!nickname) {
+      alert("자신을 식별할 수 있는 닉네임을 입력해 주세요.");
+      nicknameInput.focus();
+      return;
+    }
+
+    btnStartLogin.disabled = true;
+    btnStartLogin.textContent = "접속 중...";
+
+    if (!window.startFirebaseLogin) {
+      alert("Firebase 코드가 아직 준비되지 않았습니다. 잠시 후 다시 시도해 주세요.");
+      btnStartLogin.disabled = false;
+      btnStartLogin.textContent = "시작하기";
+      return;
+    }
+
+    const ok = await window.startFirebaseLogin(nickname);
+
+    if (ok) {
+      loginBox.classList.add("hidden");
+      gameArea.classList.remove("hidden");
+      startTimer();
+      loadQuestion();
+    } else {
+      btnStartLogin.disabled = false;
+      btnStartLogin.textContent = "시작하기";
+    }
+  });
+
+  nicknameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      btnStartLogin.click();
+    }
+  });
+
+  btnSym.addEventListener("click", () => {
+    if (hasChecked || stage !== "judge") return;
+    selectedAnswer = true;
+    btnSym.classList.add("selected");
+    btnNotSym.classList.remove("selected");
+  });
+
+  btnNotSym.addEventListener("click", () => {
+    if (hasChecked || stage !== "judge") return;
+    selectedAnswer = false;
+    btnNotSym.classList.add("selected");
+    btnSym.classList.remove("selected");
+  });
+
+  btnCheck.addEventListener("click", () => {
+    if (stage !== "judge") return;
+
+    if (selectedAnswer === null) {
+      feedback.className = "feedback bad";
+      feedback.textContent = "먼저 '점대칭도형이다 / 아니다' 중 하나를 선택해 주세요.";
+      return;
+    }
+
+    if (hasChecked) {
+      animateRotation();
+      return;
+    }
+
+    hasChecked = true;
+    btnSym.disabled = true;
+    btnNotSym.disabled = true;
+    btnCheck.disabled = true;
+    animateRotation(judgeAnswer);
+  });
+
+  btnNext.addEventListener("click", async () => {
+    if (stage !== "done") {
+      feedback.className = "feedback bad";
+      feedback.textContent = "아직 이 문제의 미션이 끝나지 않았습니다.";
+      return;
+    }
+
+    const solvedCount = index + 1;
+
+    if (solvedCount % 10 === 0 && solvedCount < allShapes.length) {
+      await showMidRanking(solvedCount);
+      return;
+    }
+
+    if (index < allShapes.length - 1) {
+      index++;
+      loadQuestion();
+    } else {
+      await showFinalResult();
+    }
+  });
+
+  btnCloseRanking.addEventListener("click", () => {
+    if (isFinalRanking) return;
+
+    rankingOverlay.classList.add("hidden");
+
+    if (index < allShapes.length - 1) {
+      index++;
+      loadQuestion();
+    }
+  });
+
+  function animateRotation(callback) {
+    const duration = 850;
+    const start = performance.now();
+
+    function frame(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const angle = Math.PI * t;
+      draw(current, angle);
+
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        draw(current, 0, { showRotatedOverlay: true });
+        if (callback) callback();
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  function judgeAnswer() {
+    if (selectedAnswer === current.isSym) {
+      const timeBonus = getTimeBonus();
+      addScore(100 + timeBonus + combo * 10);
+      combo++;
+      correctCount++;
+      updateMaxCombo();
+
+      feedback.className = "feedback good pulse";
+
+      if (current.isSym) {
+        feedback.innerHTML =
+          `<span class="confetti-text">정답입니다!</span><br>
+          이 도형은 중심 O를 기준으로 180° 돌렸을 때 자기 자신과 겹치는 점대칭도형입니다.
+          이제 대응점 미션을 모두 해결해야 다음 문제로 갈 수 있습니다.`;
+        startMission();
+      } else {
+        feedback.innerHTML =
+          `<span class="confetti-text">정답입니다!</span><br>
+          이 도형은 180° 돌려도 완전히 겹치지 않기 때문에 점대칭도형이 아닙니다.
+          [다음 문제] 버튼을 눌러 계속 진행해 보세요.`;
+        stage = "done";
+        btnNext.disabled = false;
+        starRow.textContent = combo >= 3 ? "★ ★ ★" : "★ ★ ☆";
+      }
+    } else {
+      combo = 0;
+      hearts = Math.max(0, hearts - 1);
+      penalty(30);
+      wrongCount++;
+
+      feedback.className = "feedback bad";
+
+      if (current.isSym) {
+        feedback.innerHTML =
+          `아쉽지만 이 도형은 사실 점대칭도형입니다.<br>
+          180° 돌렸을 때 겹치는지 다시 한 번 살펴보고, 대응점 미션을 통해 더 정확히 확인해 봅시다.`;
+        startMission();
+      } else {
+        feedback.innerHTML =
+          `아쉽지만 이 도형은 점대칭도형이 아닙니다.<br>
+          180° 돌렸을 때 어긋나는 부분을 눈으로 찾아보세요.`;
+        stage = "done";
+        btnNext.disabled = false;
+        starRow.textContent = "★ ☆ ☆";
+      }
+
+      if (hearts === 0) {
+        feedback.innerHTML += "<br><b>하트가 모두 사라졌지만 연습 모드이므로 계속 도전할 수 있습니다!</b>";
+        hearts = 3;
+      }
+    }
+
+    updateStats();
+  }
+
+  function startMission() {
+    if (!current.isSym || !current.pairs || current.pairs.length === 0) {
+      stage = "done";
+      btnNext.disabled = false;
+      return;
+    }
+
+    stage = "mission";
+    stageLabel.textContent = "대응점 미션";
+
+    missionList = current.pairs.map(pair => ({ from: pair[0], to: pair[1] }));
+    missionList = shuffle(missionList);
+    missionIndex = 0;
+    foundPairs = [];
+
+    missionGuide.innerHTML =
+      "중심 O를 사이에 두고 점들을 마주 보게 짝지어야 합니다.<br>" +
+      "표시된 점의 <b>대응점</b>을 도형 위에서 직접 눌러 보세요.";
+
+    setMission();
+    btnNext.disabled = true;
+  }
+
+  function setMission() {
+    if (missionIndex >= missionList.length) {
+      completeMission();
+      return;
+    }
+
+    currentTarget = missionList[missionIndex].from;
+    currentAnswer = missionList[missionIndex].to;
+
+    missionTarget.textContent = `${currentTarget}의 대응점을 눌러라!`;
+    missionProgress.style.width = `${(missionIndex / missionList.length) * 100}%`;
+
+    draw(current, 0, { selectedPoint: currentTarget });
+  }
+
+  function completeMission() {
+    stage = "done";
+    addScore(100);
+    combo++;
+    updateMaxCombo();
+
+    missionTarget.textContent = "대응점 미션 완료!";
+    missionGuide.innerHTML =
+      `<b>성공!</b> 대응점들을 모두 찾았습니다. 대응점끼리 이은 선은 중심 O를 지나며, 중심에서의 거리가 같습니다.`;
+    missionProgress.style.width = "100%";
+    starRow.textContent = combo >= 4 ? "★ ★ ★" : "★ ★ ☆";
+
+    feedback.className = "feedback good pulse";
+    feedback.innerHTML =
+      `<span class="confetti-text">미션 클리어!</span><br>
+      이 도형의 대응점을 모두 표시했습니다. 이제 [다음 문제]로 넘어갈 수 있습니다.`;
+
+    btnNext.disabled = false;
+    draw(current);
+  }
+
+  canvas.addEventListener("click", (e) => {
+    if (stage !== "mission") return;
+    if (!current.isSym) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    const clicked = findClickedPoint(x, y);
+    if (!clicked) return;
+
+    if (clicked === currentAnswer) {
+      addScore(20);
+      combo++;
+      correctCount++;
+      updateMaxCombo();
+
+      foundPairs.push([currentTarget, currentAnswer]);
+      missionIndex++;
+
+      feedback.className = "feedback good";
+      feedback.textContent = `좋아요! ${currentTarget}와 ${currentAnswer}는 중심 O를 기준으로 한 대응점입니다.`;
+
+      updateStats();
+      setMission();
+    } else if (clicked === currentTarget) {
+      penalty(10);
+      combo = 0;
+      wrongCount++;
+
+      feedback.className = "feedback bad";
+      feedback.textContent =
+        `${currentTarget} 자기 자신은 대응점이 아닙니다. 중심 O를 사이에 두고 반대쪽에 있는 점을 찾아보세요.`;
+
+      draw(current, 0, { selectedPoint: currentTarget, wrongPoint: clicked });
+      updateStats();
+    } else {
+      penalty(10);
+      combo = 0;
+      hearts = Math.max(0, hearts - 1);
+      wrongCount++;
+
+      feedback.className = "feedback bad";
+      feedback.textContent =
+        `아직 아니에요. ${currentTarget}에서 중심 O를 지나 같은 거리만큼 반대편으로 가 보세요.`;
+
+      draw(current, 0, { selectedPoint: currentTarget, wrongPoint: clicked });
+
+      if (hearts === 0) {
+        hearts = 3;
+        feedback.textContent += " 하트가 다시 채워졌습니다. 계속 도전해 보세요!";
+      }
+
+      updateStats();
+    }
+  });
+
+  function findClickedPoint(px, py) {
+    let nearest = null;
+    let nearestDist = Infinity;
+
+    for (const label of current.order) {
+      const p = pointToCanvas(...current.points[label]);
+      const d = Math.hypot(px - p.x, py - p.y);
+
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearest = label;
+      }
+    }
+
+    if (nearestDist <= 25) return nearest;
+    return null;
+  }
+</script>
+</body>
+</html>
